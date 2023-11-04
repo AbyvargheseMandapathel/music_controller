@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { Grid, Button, Typography } from "@mui/material";
 
 function Room() {
   const { roomCode } = useParams();
+  const navigate = useNavigate(); // Use the useNavigate hook to navigate
+
   const [roomDetails, setRoomDetails] = useState({
     votesToSkip: 2,
     guestCanPause: false,
@@ -25,13 +28,47 @@ function Room() {
       });
   };
 
+  const leaveButtonPressed = () => {
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    };
+
+    fetch('/api/leave-room', requestOptions)
+      .then(() => {
+        navigate('/'); // Use navigate to go to the home page
+      })
+      .catch((error) => console.error("Error:", error));
+  };
+
   return (
-    <div>
-      <h3>{roomCode}</h3>
-      <p>Votes: {roomDetails.votesToSkip}</p>
-      <p>Guest: {roomDetails.guestCanPause ? "Yes" : "No"}</p>
-      <p>Host: {roomDetails.isHost ? "Yes" : "No"}</p>
-    </div>
+    <Grid container spacing={1}>
+      <Grid item xs={12} align="center">
+        <Typography variant="h4">Code: {roomCode}</Typography>
+      </Grid>
+      <Grid item xs={12} align="center">
+        <Typography variant="h5">Votes: {roomDetails.votesToSkip}</Typography>
+      </Grid>
+      <Grid item xs={12} align="center">
+        <Typography variant="h5">
+          Guest: {roomDetails.guestCanPause ? "Yes" : "No"}
+        </Typography>
+      </Grid>
+      <Grid item xs={12} align="center">
+        <Typography variant="h5">
+          Host: {roomDetails.isHost ? "Yes" : "No"}
+        </Typography>
+      </Grid>
+      <Grid item xs={12} align="center">
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={leaveButtonPressed}
+        >
+          Leave Room
+        </Button>
+      </Grid>
+    </Grid>
   );
 }
 
