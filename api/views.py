@@ -104,3 +104,9 @@ class LeaveRoom(APIView):
                 room.delete()
                 
         return Response({"message":'Success'},status=status.HTTP_200_OK)
+
+class UpdateView(APIView):
+    # serializer_class =  self.
+    
+    def patch(self, request,format = None):
+        pass
