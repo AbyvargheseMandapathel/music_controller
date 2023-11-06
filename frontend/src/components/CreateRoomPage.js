@@ -1,6 +1,4 @@
-import React, { Component } from "react";
-import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
+import React, { useState, useEffect } from "react";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
@@ -9,13 +7,25 @@ import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
-import FormLabel from "@mui/material/FormLabel";
+import Button from "@mui/material/Button";
 import { Link, useNavigate } from "react-router-dom";
 
-export default function CreateRoomPage(props) {
-  const [guestCanPause, setGuestCanPause] = React.useState(true);
-  const [votesToSkip, setVotesToSkip] = React.useState(2);
+function CreateRoomPage(props) {
+  const {
+    votesToSkip: initialVotesToSkip = 2,
+    guestCanPause: initialGuestCanPause = true,
+    update = false,
+    roomCode,
+    updateCallback,
+  } = props;
+
+  const [guestCanPause, setGuestCanPause] = useState(initialGuestCanPause);
+  const [votesToSkip, setVotesToSkip] = useState(initialVotesToSkip);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = update ? "Update Room" : "Create Room";
+  }, [update]);
 
   const handleVotesChanged = (e) => {
     setVotesToSkip(e.target.value);
@@ -26,22 +36,28 @@ export default function CreateRoomPage(props) {
   };
 
   const handleRoomButtonPressed = () => {
+    const apiEndpoint = update ? "/api/update-room" : "/api/create-room/";
+
     const requestOptions = {
-      method: "POST",
+      method: update ? "PATCH" : "POST", // Use "PATCH" for updates
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         votes_to_skip: votesToSkip,
         guest_can_pause: guestCanPause,
+        code: roomCode, // Include the room code for updates
       }),
     };
 
-    fetch("/api/create-room/", requestOptions)
+    fetch(apiEndpoint, requestOptions)
       .then((response) => response.json())
       .then((data) => {
         const roomCode = data.code;
-        navigate(`/room/${roomCode}`); // Use navigate from React Router
+        if (updateCallback) {
+          updateCallback(roomCode);
+        }
+        navigate(`/room/${roomCode}`);
       })
       .catch((error) => console.error("Error:", error));
   };
@@ -50,7 +66,7 @@ export default function CreateRoomPage(props) {
     <Grid container spacing={1}>
       <Grid item xs={12} align="center">
         <Typography component="h4" variant="h4">
-          Create Room
+          {update ? "Update Room" : "Create Room"}
         </Typography>
       </Grid>
       <Grid item xs={12} align="center">
@@ -81,7 +97,7 @@ export default function CreateRoomPage(props) {
       <Grid item xs={12} align="center">
         <FormControl>
           <TextField
-            required={true}
+            required
             onChange={handleVotesChanged}
             type="number"
             value={votesToSkip}
@@ -89,7 +105,7 @@ export default function CreateRoomPage(props) {
               min: 1,
               style: { textAlign: "center" },
             }}
-          ></TextField>
+          />
           <FormHelperText>
             <div align="center">Votes Required to Skip</div>
           </FormHelperText>
@@ -101,14 +117,23 @@ export default function CreateRoomPage(props) {
           variant="contained"
           onClick={handleRoomButtonPressed}
         >
-          Create A Room
+          {update ? "Update Room" : "Create Room"}
         </Button>
       </Grid>
-      <Grid item xs={12} align="center">
-        <Button color="secondary" variant="contained" to="/" component={Link}>
-          Back
-        </Button>
-      </Grid>
+      {update ? null : (
+        <Grid item xs={12} align="center">
+          <Button
+            color="secondary"
+            variant="contained"
+            component={Link}
+            to={roomCode ? `/room/${roomCode}` : "/"}
+          >
+            {roomCode ? "Leave Room" : "Back"}
+          </Button>
+        </Grid>
+      )}
     </Grid>
   );
 }
+
+export default CreateRoomPage;
